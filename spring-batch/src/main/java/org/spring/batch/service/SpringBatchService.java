@@ -21,8 +21,6 @@ public class SpringBatchService {
     private Job job;
 
     public void launchJob( Date date) throws Exception {
-        JobExecution jobExecution = jobLauncher.run( job, new JobParametersBuilder().addDate("launchDate", date)
-                .toJobParameters());
-        log.debug("Batch job ends with status as " + jobExecution.getStatus());
+        jobLauncher.run( job, new JobParametersBuilder().addDate("launchDate", date).toJobParameters());
     }
 }

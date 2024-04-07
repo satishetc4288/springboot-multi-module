@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.spring.batch.model.Coffee;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
+import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.repository.JobRepository;
@@ -23,6 +24,7 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import javax.sql.DataSource;
+import java.util.Map;
 
 @Configuration
 @Slf4j
@@ -41,7 +43,9 @@ public class BatchConfiguration {
     private JobNotificationListener jobNotificationListener;
 
     @Bean
-    public FlatFileItemReader<Coffee> reader() {
+    @StepScope
+    public FlatFileItemReader<Coffee> reader(@Value("#{jobParameters}") Map<String, Object> jobParameters) {
+        log.info("#########  jobParameters: " + jobParameters.entrySet());
         return new FlatFileItemReaderBuilder<Coffee>().name("coffeeItemReader")
             .resource(new ClassPathResource(fileInput))
             .delimited()
@@ -82,10 +86,10 @@ public class BatchConfiguration {
     }
 
     @Bean
-    public Step step1(JdbcBatchItemWriter<Coffee> writer) {
+    public Step step1(JdbcBatchItemWriter<Coffee> writer, FlatFileItemReader<Coffee> reader) {
         return new StepBuilder("step1", jobRepository)
             .<Coffee, Coffee> chunk(10, transactionManager)
-            .reader(reader())
+            .reader(reader)
             .processor(processor())
             .writer(writer)
             .listener(new ChunkExecutionListener())
