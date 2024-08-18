@@ -10,6 +10,9 @@
     </parent>
 
     <artifactId>spring-batch</artifactId>
+    <properties>
+        <java.version>21</java.version>
+    </properties>
 
     <dependencies>
         <dependency>
