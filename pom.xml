@@ -14,23 +14,36 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.2.4</version>
+        <version>3.3.2</version>
     </parent>
 
     <properties>
         <java.version>21</java.version>
+        <security.version>1.0-SNAPSHOT</security.version>
     </properties>
 
     <modules>
         <module>spring-batch</module>
+        <module>security-lib</module>
     </modules>
 
-    <dependencies>
-        <dependency>
+    <dependencyManagement>
+        <dependencies><dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <version>1.18.32</version>
         </dependency>
-    </dependencies>
+            <dependency>
+                <groupId>mysql</groupId>
+                <artifactId>mysql-connector-java</artifactId>
+                <version>8.0.33</version>
+            </dependency>
+            <dependency>
+                <groupId>example.security</groupId>
+                <artifactId>security-lib</artifactId>
+                <version>${security.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
 </project>
