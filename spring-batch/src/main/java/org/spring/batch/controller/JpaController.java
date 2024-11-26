@@ -2,7 +2,6 @@ package org.spring.batch.controller;
 
 import lombok.AllArgsConstructor;
 import org.spring.batch.repository.CoffeeRepository;
-import org.spring.batch.service.SpringBatchService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -11,16 +10,13 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Date;
 
 @RestController
-@RequestMapping("/batch")
+@RequestMapping("/jpa")
 @AllArgsConstructor
-public class DataController {
+public class JpaController {
+    private final CoffeeRepository coffeeRepository;
 
-    private final SpringBatchService springBatchService;
-
-    @GetMapping("/data")
-    public ResponseEntity<?> getBatchData() throws Exception {
-        springBatchService.launchJob(new Date());
-        return ResponseEntity.ok("");
+    @GetMapping("/get/coffee")
+    public ResponseEntity<?> getCoffeeList() throws Exception {
+        return ResponseEntity.ok(coffeeRepository.findAll());
     }
-
 }
