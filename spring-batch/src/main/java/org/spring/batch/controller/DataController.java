@@ -1,7 +1,6 @@
 package org.spring.batch.controller;
 
 import lombok.AllArgsConstructor;
-import org.spring.batch.repository.CoffeeRepository;
 import org.spring.batch.service.SpringBatchService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
