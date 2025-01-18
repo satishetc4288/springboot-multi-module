@@ -1,7 +1,10 @@
 package org.spring.batch.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.spring.batch.model.Coffee;
+import org.spring.batch.repository.entity.Address;
+import org.spring.batch.repository.entity.Coffee;
+import org.spring.batch.service.CustomWriter;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.StepScope;
@@ -10,21 +13,16 @@ import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ItemProcessor;
-import org.springframework.batch.item.database.BeanPropertyItemSqlParameterSourceProvider;
 import org.springframework.batch.item.database.JdbcBatchItemWriter;
-import org.springframework.batch.item.database.builder.JdbcBatchItemWriterBuilder;
 import org.springframework.batch.item.file.FlatFileItemReader;
 import org.springframework.batch.item.file.builder.FlatFileItemReaderBuilder;
-import org.springframework.batch.item.file.mapping.BeanWrapperFieldSetMapper;
+import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.transaction.PlatformTransactionManager;
-
-import javax.sql.DataSource;
-import java.util.Map;
 
 @Configuration
 @Slf4j
@@ -37,6 +35,9 @@ public class BatchConfiguration {
     private JobRepository jobRepository;
 
     @Autowired
+    private CustomWriter customWriter;
+
+    @Autowired
     private PlatformTransactionManager transactionManager;
 
     @Autowired
@@ -44,17 +45,27 @@ public class BatchConfiguration {
 
     @Bean
     @StepScope
-    public FlatFileItemReader<Coffee> reader(@Value("#{jobParameters}") Map<String, Object> jobParameters) {
-        log.info("#########  jobParameters: " + jobParameters.entrySet());
-        return new FlatFileItemReaderBuilder<Coffee>().name("coffeeItemReader")
-            .resource(new ClassPathResource(fileInput))
-            .delimited()
-            .names("brand", "origin", "characteristics")
-            .fieldSetMapper(new BeanWrapperFieldSetMapper<>() {{
-                setTargetType(Coffee.class);
-            }})
-            .build();
+    public FlatFileItemReader<Coffee> createReader() {
+        return new FlatFileItemReaderBuilder<Coffee>()
+                .name("coffeeItemReader")
+                .resource(new ClassPathResource("coffee-list.csv"))
+                .lineTokenizer(new DelimitedLineTokenizer() {{
+                    setDelimiter("||~~||");
+                    setNames("brand", "origin", "characteristics", "address");
+                }})
+                .fieldSetMapper(fieldSet -> {
+                    Coffee coffee = new Coffee();
+                    coffee.setOrigin(fieldSet.readString("origin"));
+                    coffee.setBrand(fieldSet.readString("brand"));
+                    coffee.setCharacteristics(fieldSet.readString("characteristics"));
+                    String addressJson = fieldSet.readString("address");
+                    coffee.setAddress(getAddress(addressJson));
+                    log.info("################# coffee:" + coffee.toString());
+                    return coffee;
+                })
+                .build();
     }
+
 
     @Bean
     public ItemProcessor<Coffee,Coffee> processor() {
@@ -63,17 +74,20 @@ public class BatchConfiguration {
                 new Coffee(
                         coffee.getBrand().toUpperCase(),
                         coffee.getOrigin().toUpperCase(),
-                        coffee.getCharacteristics().toUpperCase()
+                        coffee.getCharacteristics().toUpperCase(),
+                        coffee.getAddress()
                 );
     }
 
-    @Bean
-    public JdbcBatchItemWriter<Coffee> writer(DataSource dataSource) {
-        return new JdbcBatchItemWriterBuilder<Coffee>().itemSqlParameterSourceProvider(new BeanPropertyItemSqlParameterSourceProvider<>())
-            .sql("INSERT INTO coffee (brand, origin, characteristics) VALUES (:brand, :origin, :characteristics)")
-            .dataSource(dataSource)
-            .build();
-    }
+//    @Bean
+//    public JdbcBatchItemWriter<Coffee> writer(DataSource dataSource) {
+//        return new JdbcBatchItemWriterBuilder<Coffee>()
+//            .itemSqlParameterSourceProvider(new BeanPropertyItemSqlParameterSourceProvider<>())
+//            .sql("INSERT INTO coffee (brand, origin, characteristics, address) VALUES (:brand, :origin, :characteristics, :address)")
+//            .dataSource(dataSource)
+//            .build();
+//    }
+
 
     @Bean
     public Job importUserJob(Step step1) {
@@ -91,9 +105,20 @@ public class BatchConfiguration {
             .<Coffee, Coffee> chunk(10, transactionManager)
             .reader(reader)
             .processor(processor())
-            .writer(writer)
+            .writer(customWriter)
             .listener(new ChunkExecutionListener())
             .build();
+    }
+
+    private  Address getAddress(String addressJson) {
+        Address address = null;
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            address = mapper.readValue(addressJson, Address.class);
+        } catch (Exception e) {
+            throw new RuntimeException("Error parsing JSON address", e);
+        }
+        return address;
     }
 
 }
