@@ -14,22 +14,18 @@ public class AddressAttributeConverter implements AttributeConverter<Address, St
 
     @Override
     public String convertToDatabaseColumn(Address address) {
-        log.info("################## address: " + address);
         try {
             return objectMapper.writeValueAsString(address);
         } catch (JsonProcessingException jpe) {
-            log.warn("Cannot convert Address into JSON");
             return null;
         }
     }
 
     @Override
     public Address convertToEntityAttribute(String value) {
-        log.info("################## value: " + value);
         try {
             return objectMapper.readValue(value, Address.class);
         } catch (JsonProcessingException e) {
-            log.warn("Cannot convert JSON into Address {}", e.getMessage());
             return null;
         }
     }
