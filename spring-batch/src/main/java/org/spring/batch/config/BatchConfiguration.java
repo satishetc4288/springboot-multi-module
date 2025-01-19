@@ -57,12 +57,12 @@ public class BatchConfiguration {
                 setNames("brand", "origin", "characteristics", "address");
             }})
             .fieldSetMapper(fieldSet ->
-                    Coffee.builder()
-                         .brand(fieldSet.readString("brand"))
-                         .origin(fieldSet.readString("origin"))
-                         .characteristics(fieldSet.readString("characteristics"))
-                         .address(CommonUtils.stringToObject(fieldSet.readString("address")))
-                         .build())
+                Coffee.builder()
+                    .brand(fieldSet.readString("brand"))
+                    .origin(fieldSet.readString("origin"))
+                    .characteristics(fieldSet.readString("characteristics"))
+                    .address(CommonUtils.stringToObject(fieldSet.readString("address")))
+                    .build())
             .build();
     }
 

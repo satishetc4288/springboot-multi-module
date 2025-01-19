@@ -3,7 +3,7 @@ package org.spring.batch.repository.entity;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Data;
-import org.spring.batch.repository.AddressAttributeConverter;
+import org.spring.batch.util.AddressAttributeConverter;
 
 @Entity
 @Table(name = "Coffee")
