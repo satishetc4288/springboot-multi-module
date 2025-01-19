@@ -1,23 +1,15 @@
 package org.spring.batch.repository.entity;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Data;
 import org.spring.batch.repository.AddressAttributeConverter;
 
 @Entity
 @Table(name = "Coffee")
 @Data
+@Builder
 public class Coffee {
-
-    public Coffee() {}
-
-    public Coffee(String brand, String origin, String characteristics, Address address) {
-        this.brand = brand;
-        this.origin = origin;
-        this.characteristics = characteristics;
-        this.address = address;
-    }
 
     @Id
     @GeneratedValue

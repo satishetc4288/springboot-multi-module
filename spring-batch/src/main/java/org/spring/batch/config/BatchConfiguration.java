@@ -1,10 +1,8 @@
 package org.spring.batch.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.spring.batch.repository.entity.Address;
 import org.spring.batch.repository.entity.Coffee;
-import org.spring.batch.service.CustomWriter;
+import org.spring.batch.util.CommonUtils;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.StepScope;
@@ -13,7 +11,7 @@ import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ItemProcessor;
-import org.springframework.batch.item.database.JdbcBatchItemWriter;
+import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.file.FlatFileItemReader;
 import org.springframework.batch.item.file.builder.FlatFileItemReaderBuilder;
 import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
@@ -24,9 +22,14 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.transaction.PlatformTransactionManager;
 
+import javax.sql.DataSource;
+import java.sql.PreparedStatement;
+
 @Configuration
 @Slf4j
 public class BatchConfiguration {
+
+    private static final String SQL = "INSERT INTO coffee (brand, origin, characteristics, address) VALUES (?,?,?,?);";
 
     @Value("${file.input}")
     private String fileInput;
@@ -35,7 +38,7 @@ public class BatchConfiguration {
     private JobRepository jobRepository;
 
     @Autowired
-    private CustomWriter customWriter;
+    private DataSource dataSource;
 
     @Autowired
     private PlatformTransactionManager transactionManager;
@@ -47,47 +50,49 @@ public class BatchConfiguration {
     @StepScope
     public FlatFileItemReader<Coffee> createReader() {
         return new FlatFileItemReaderBuilder<Coffee>()
-                .name("coffeeItemReader")
-                .resource(new ClassPathResource("coffee-list.csv"))
-                .lineTokenizer(new DelimitedLineTokenizer() {{
-                    setDelimiter("||~~||");
-                    setNames("brand", "origin", "characteristics", "address");
-                }})
-                .fieldSetMapper(fieldSet -> {
-                    Coffee coffee = new Coffee();
-                    coffee.setOrigin(fieldSet.readString("origin"));
-                    coffee.setBrand(fieldSet.readString("brand"));
-                    coffee.setCharacteristics(fieldSet.readString("characteristics"));
-                    String addressJson = fieldSet.readString("address");
-                    coffee.setAddress(getAddress(addressJson));
-                    log.info("################# coffee:" + coffee.toString());
-                    return coffee;
-                })
-                .build();
+            .name("coffeeItemReader")
+            .resource(new ClassPathResource("coffee-list.csv"))
+            .lineTokenizer(new DelimitedLineTokenizer() {{
+                setDelimiter("||~~||");
+                setNames("brand", "origin", "characteristics", "address");
+            }})
+            .fieldSetMapper(fieldSet ->
+                    Coffee.builder()
+                         .brand(fieldSet.readString("brand"))
+                         .origin(fieldSet.readString("origin"))
+                         .characteristics(fieldSet.readString("characteristics"))
+                         .address(CommonUtils.stringToObject(fieldSet.readString("address")))
+                         .build())
+            .build();
     }
 
 
     @Bean
     public ItemProcessor<Coffee,Coffee> processor() {
         return
-            coffee ->
-                new Coffee(
-                        coffee.getBrand().toUpperCase(),
-                        coffee.getOrigin().toUpperCase(),
-                        coffee.getCharacteristics().toUpperCase(),
-                        coffee.getAddress()
-                );
+    coffee ->
+                Coffee.builder()
+                    .brand(coffee.getBrand().toUpperCase())
+                    .origin(coffee.getOrigin().toUpperCase())
+                    .characteristics(coffee.getCharacteristics().toUpperCase())
+                    .address(coffee.getAddress())
+                    .build();
     }
 
-//    @Bean
-//    public JdbcBatchItemWriter<Coffee> writer(DataSource dataSource) {
-//        return new JdbcBatchItemWriterBuilder<Coffee>()
-//            .itemSqlParameterSourceProvider(new BeanPropertyItemSqlParameterSourceProvider<>())
-//            .sql("INSERT INTO coffee (brand, origin, characteristics, address) VALUES (:brand, :origin, :characteristics, :address)")
-//            .dataSource(dataSource)
-//            .build();
-//    }
-
+    @Bean
+    public ItemWriter<Coffee> write() {
+        return list -> {
+            PreparedStatement preparedStatement = dataSource.getConnection().prepareStatement(SQL);
+            for (Coffee identity : list) {
+                preparedStatement.setString(1, identity.getBrand());
+                preparedStatement.setString(2, identity.getOrigin());
+                preparedStatement.setString(3, identity.getCharacteristics());
+                preparedStatement.setString(4, CommonUtils.objectToString(identity.getAddress()));
+                preparedStatement.addBatch();
+            }
+            preparedStatement.executeBatch();
+        };
+    }
 
     @Bean
     public Job importUserJob(Step step1) {
@@ -100,25 +105,14 @@ public class BatchConfiguration {
     }
 
     @Bean
-    public Step step1(JdbcBatchItemWriter<Coffee> writer, FlatFileItemReader<Coffee> reader) {
+    public Step step1() {
         return new StepBuilder("step1", jobRepository)
             .<Coffee, Coffee> chunk(10, transactionManager)
-            .reader(reader)
+            .reader(createReader())
             .processor(processor())
-            .writer(customWriter)
+            .writer(write())
             .listener(new ChunkExecutionListener())
             .build();
-    }
-
-    private  Address getAddress(String addressJson) {
-        Address address = null;
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            address = mapper.readValue(addressJson, Address.class);
-        } catch (Exception e) {
-            throw new RuntimeException("Error parsing JSON address", e);
-        }
-        return address;
     }
 
 }
