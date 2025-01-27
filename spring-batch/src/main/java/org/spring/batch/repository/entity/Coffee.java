@@ -1,14 +1,18 @@
 package org.spring.batch.repository.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import org.spring.batch.util.AddressAttributeConverter;
 
 @Entity
 @Table(name = "Coffee")
 @Data
 @Builder
+@AllArgsConstructor
+@RequiredArgsConstructor
 public class Coffee {
 
     @Id
