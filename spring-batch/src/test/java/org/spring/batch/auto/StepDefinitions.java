@@ -17,7 +17,7 @@ public class StepDefinitions {
 
     private ResponseEntity<String> response;
 
-    @Given("the Spring Boot application is running")
+    @Given("the Spring Boot application is initialised and running")
     public void the_spring_boot_application_is_running() {
         testRestTemplate = testRestTemplate.withBasicAuth("admin", "admin");
     }
