@@ -1,6 +1,5 @@
 package org.spring.batch.auto;
 
-import io.cucumber.java.Before;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
@@ -18,14 +17,9 @@ public class StepDefinitions {
 
     private ResponseEntity<String> response;
 
-    @Before
-    public void before() {
-        testRestTemplate = testRestTemplate.withBasicAuth("admin", "admin");
-    }
-
     @Given("the Spring Boot application is running")
     public void the_spring_boot_application_is_running() {
-        // Application should be running as part of @SpringBootTest setup
+        testRestTemplate = testRestTemplate.withBasicAuth("admin", "admin");
     }
 
     @When("I send a GET request to {string}")
