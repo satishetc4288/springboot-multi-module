@@ -22,4 +22,9 @@ public class DataController {
         return ResponseEntity.ok("");
     }
 
+    @GetMapping("/hello")
+    public String hello() {
+        return "Hello, World!";
+    }
+
 }

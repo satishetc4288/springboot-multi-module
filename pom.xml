@@ -20,6 +20,9 @@
 
     <properties>
         <java.version>21</java.version>
+        <lombok.version>1.18.32</lombok.version>
+        <pg.version>42.7.4</pg.version>
+        <cc.version>7.20.1</cc.version>
         <security.version>1.0-SNAPSHOT</security.version>
     </properties>
 
@@ -33,12 +36,12 @@
             <dependency>
                 <groupId>org.projectlombok</groupId>
                 <artifactId>lombok</artifactId>
-                <version>1.18.32</version>
+                <version>${lombok.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.postgresql</groupId>
                 <artifactId>postgresql</artifactId>
-                <version>42.7.4</version>
+                <version>${pg.version}</version>
             </dependency>
 <!--            <dependency>-->
 <!--                <groupId>mysql</groupId>-->
@@ -49,6 +52,23 @@
                 <groupId>example.security</groupId>
                 <artifactId>security-lib</artifactId>
                 <version>${security.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.cucumber</groupId>
+                <artifactId>cucumber-spring</artifactId>
+                <version>${cc.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.cucumber</groupId>
+                <artifactId>cucumber-junit</artifactId>
+                <version>${cc.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.cucumber</groupId>
+                <artifactId>cucumber-java</artifactId>
+                <version>${cc.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

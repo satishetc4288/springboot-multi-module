@@ -21,11 +21,11 @@ public class SpringBatchService {
 
     public void launchJob( Date date) throws Exception {
         jobLauncher
-                .run(
-                        job,
-                        new JobParametersBuilder()
-                                .addDate("launchDate", date)
-                                .toJobParameters()
-                );
+            .run(
+                job,
+                new JobParametersBuilder()
+                    .addDate("launchDate", date)
+                    .toJobParameters()
+            );
     }
 }
