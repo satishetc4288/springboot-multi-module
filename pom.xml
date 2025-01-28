@@ -23,6 +23,7 @@
         <lombok.version>1.18.32</lombok.version>
         <pg.version>42.7.4</pg.version>
         <cc.version>7.20.1</cc.version>
+        <jacoco.version>0.8.12</jacoco.version>
         <security.version>1.0-SNAPSHOT</security.version>
     </properties>
 
@@ -70,6 +71,12 @@
                 <artifactId>cucumber-java</artifactId>
                 <version>${cc.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>${jacoco.version}</version>
+            </dependency>
+
         </dependencies>
     </dependencyManagement>
 
