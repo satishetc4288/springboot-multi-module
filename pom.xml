@@ -76,7 +76,6 @@
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <version>${jacoco.version}</version>
             </dependency>
-
         </dependencies>
     </dependencyManagement>
 
