@@ -17,6 +17,7 @@ public class AsynchController {
 
     @GetMapping(value = "/test")
     public CompletableFuture<String> getString(){
-        return futureCalc.runAsynch();
+        futureCalc.runAsynch();
+        return CompletableFuture.completedFuture("nname");
     }
 }
